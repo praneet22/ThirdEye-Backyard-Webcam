@@ -93,7 +93,18 @@
               "image": "${MODULES.ImageClassifierService.arm32v7}",
               "createOptions": ""
             }
+          },
+          "wildlife-image-classifier": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.WildlifeModel.arm32v7}",
+              "createOptions": ""
+            }
           }
+        
         }
       }
     },
