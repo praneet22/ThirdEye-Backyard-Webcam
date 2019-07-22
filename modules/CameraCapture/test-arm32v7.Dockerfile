@@ -49,6 +49,6 @@ ADD /app/ .
 ADD /test/ .
 
 # Expose the port
-EXPOSE 5012
+EXPOSE 5012:5012
 
 ENTRYPOINT [ "python3", "-u", "./main.py" ]

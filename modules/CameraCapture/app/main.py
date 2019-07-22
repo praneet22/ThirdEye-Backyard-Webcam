@@ -67,7 +67,10 @@ def main(
         convertToGray = False,
         resizeWidth = 0,
         resizeHeight = 0,
-        annotate = False
+        annotate = False,
+        sendSMS=False,
+        account_sid = None, 
+        auth_token = None
         ):
     '''
     Capture a camera feed, send it to processing and forward outputs to EdgeHub
@@ -92,7 +95,7 @@ def main(
         except IoTHubError as iothub_error:
             print ( "Unexpected error %s from IoTHub" % iothub_error )
             return
-        with CameraCapture(videoPath, imageProcessingEndpoint, imageProcessingParams, showVideo, verbose, loopVideo, convertToGray, resizeWidth, resizeHeight, annotate, send_to_Hub_callback) as cameraCapture:
+        with CameraCapture(videoPath, imageProcessingEndpoint, imageProcessingParams, showVideo, verbose, loopVideo, convertToGray, resizeWidth, resizeHeight, annotate, sendSMS, account_sid, auth_token,send_to_Hub_callback) as cameraCapture:
             cameraCapture.start()
     except KeyboardInterrupt:
         print ( "Camera capture module stopped" )
@@ -118,11 +121,14 @@ if __name__ == '__main__':
         CONVERT_TO_GRAY = __convertStringToBool(os.getenv('CONVERT_TO_GRAY', 'False'))
         RESIZE_WIDTH = int(os.getenv('RESIZE_WIDTH', 0))
         RESIZE_HEIGHT = int(os.getenv('RESIZE_HEIGHT',0))
-        ANNOTATE = __convertStringToBool(os.getenv('ANNOTATE', 'False'))
+        ANNOTATE = __convertStringToBool(os.getenv('ANNOTATE', 'False')),
+        SEND_SMS = __convertStringToBool(os.getenv('SEND_SMS', 'False')),
+        TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', ""), 
+        TWILIO_AUTH = os.getenv('TWILIO_AUTH', "")
 
     except ValueError as error:
         print ( error )
         sys.exit(1)
 
-    main(VIDEO_PATH, IMAGE_PROCESSING_ENDPOINT, IMAGE_PROCESSING_PARAMS, SHOW_VIDEO, VERBOSE, LOOP_VIDEO, CONVERT_TO_GRAY, RESIZE_WIDTH, RESIZE_HEIGHT, ANNOTATE)
+    main(VIDEO_PATH, IMAGE_PROCESSING_ENDPOINT, IMAGE_PROCESSING_PARAMS, SHOW_VIDEO, VERBOSE, LOOP_VIDEO, CONVERT_TO_GRAY, RESIZE_WIDTH, RESIZE_HEIGHT, ANNOTATE, SEND_SMS, TWILIO_ACCOUNT_SID, TWILIO_AUTH)
 

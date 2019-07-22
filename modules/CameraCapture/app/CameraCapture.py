@@ -23,6 +23,8 @@ import AnnotationParser
 from AnnotationParser import AnnotationParser
 import ImageServer
 from ImageServer import ImageServer
+import Sms
+from MessageParser import MessageParser
 
 class CameraCapture(object):
 
@@ -45,7 +47,11 @@ class CameraCapture(object):
             resizeWidth = 0,
             resizeHeight = 0,
             annotate = False,
+            sendSMS=False,
+            account_sid = None, 
+            auth_token = None,
             sendToHubCallback = None):
+
         self.videoPath = videoPath
         if self.__IsInt(videoPath):
             #case of a usb camera (usually mounted at /dev/video* where * is an int)
@@ -64,11 +70,14 @@ class CameraCapture(object):
         self.convertToGray = convertToGray
         self.resizeWidth = resizeWidth
         self.resizeHeight = resizeHeight
-        self.annotate = (self.imageProcessingEndpoint != "") and self.showVideo & annotate
+        self.annotate = (self.imageProcessingEndpoint != "") and self.showVideo and annotate
         self.nbOfPreprocessingSteps = 0
         self.autoRotate = False
         self.sendToHubCallback = sendToHubCallback
         self.vs = None
+        self.sendSMS = sendSMS
+        self.account_sid = account_sid
+        self.auth_token = auth_token
 
         if self.convertToGray:
             self.nbOfPreprocessingSteps +=1
@@ -204,12 +213,23 @@ class CameraCapture(object):
                     print("Time to process frame externally: " + self.__displayTimeDifferenceInMs(time.time(), startProcessingExternally))
                     startSendingToEdgeHub = time.time()
 
-                #forwarding outcome of external processing to the EdgeHub
-                if response != "[]" and self.sendToHubCallback is not None:
-                    self.sendToHubCallback(response)
-                    if self.verbose:
-                        print("Time to message from processing service to edgeHub: " + self.__displayTimeDifferenceInMs(time.time(), startSendingToEdgeHub))
-                        startDisplaying = time.time()
+                if self.sendSMS and response != "[]":
+                    client = Sms.get_client(self.account_sid, self.auth_token)
+                    MESSAGE_PARSER = MessageParser()
+                    print("Here is the image classifier response: ")
+                    print(response)
+                    prediction_tag = "deer"#MESSAGE_PARSER.highestProbabilityTagMeetingThreshold(response, 0.5)
+                    if prediction_tag.lower() in ["beer","deer","squirrel","dog", "cat"]:
+                        body="Saw a {} in backyard".format(prediction_tag)
+                        Sms.send_alert(client, body)
+                        time.sleep(40)
+ 
+                # #forwarding outcome of external processing to the EdgeHub
+                # if response != "[]" and self.sendToHubCallback is not None:
+                #     self.sendToHubCallback(response)
+                #     if self.verbose:
+                #         print("Time to message from processing service to edgeHub: " + self.__displayTimeDifferenceInMs(time.time(), startSendingToEdgeHub))
+                #         startDisplaying = time.time()
 
             #Display frames
             if self.showVideo:
