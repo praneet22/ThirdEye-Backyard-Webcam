@@ -1,4 +1,4 @@
-FROM balenalib/raspberrypi3
+FROM balenalib/raspberrypi3-python:3.5.7
 # The balena base image for building apps on Raspberry Pi 3.
 
 RUN echo "BUILD MODULE: CameraCapture"
@@ -8,9 +8,6 @@ RUN [ "cross-build-start" ]
 
 # Update package index and install dependencies
 RUN install_packages \
-    python3 \
-    python3-pip \
-    python3-dev \
     build-essential \
     libopenjp2-7-dev \
     zlib1g-dev \

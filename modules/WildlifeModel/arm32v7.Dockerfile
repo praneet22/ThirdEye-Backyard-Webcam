@@ -18,12 +18,10 @@ RUN apt-get update &&  apt-get install -y \
         wget
 
 # Python dependencies
+COPY /build/arm32v7-requirements.txt ./
 RUN pip3 install --upgrade pip 
-RUN pip3 install --upgrade setuptools 
-RUN pip3 install pillow
-RUN pip3 install numpy
-RUN pip3 install flask
-RUN pip3 install tensorflow
+RUN pip3 install --upgrade setuptools
+RUN pip3 install --index-url=https://www.piwheels.org/simple -r arm32v7-requirements.txt
 
 # Add the application
 ADD app /app
