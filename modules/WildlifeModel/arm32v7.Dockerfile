@@ -1,8 +1,12 @@
-﻿FROM balenalib/raspberrypi3
+﻿FROM resin/raspberrypi3-debian:stretch
+# The balena base image for building apps on Raspberry Pi 3.
 
 RUN echo "BUILD MODULE: Wildlifeclassifier"
-# Enable cross building of ARM on x64 hardware, Remove this and the cross-build-end if building on ARM hardware.
+
+# Enforces cross-compilation through Quemu
 RUN [ "cross-build-start" ]
+
+RUN apt-get update && apt-get install -y python3-pip libboost-python-dev
 
 # Install dependencies
 RUN apt-get update &&  apt-get install -y \
