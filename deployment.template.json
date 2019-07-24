@@ -47,10 +47,10 @@
             "status": "running",
             "restartPolicy": "always",
             "env": {
-              "LOCAL_PICTURE_PATH": "$LOCAL_PICTURE_PATH",
-              "NH_CONNECTION_STRING": "$NH_CONNECTION_STRING",
-              "NH_NAME": "$NH_NAME",
-              "IOT_HUB_CONNECTION_sTRING": "$IOT_HUB_CONNECTION_STRING"
+              "LOCAL_PICTURE_PATH": {"value": "$LOCAL_PICTURE_PATH"},
+              "NH_CONNECTION_STRING": {"value": "$NH_CONNECTION_STRING"},
+              "NH_NAME": {"value": "$NH_NAME"},
+              "IOT_HUB_CONNECTION_STRING": {"value": "$IOT_HUB_CONNECTION_STRING"}
             },
             "settings": {
               "image": "${MODULES.CameraCapture.arm32v7}",
