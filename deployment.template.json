@@ -47,16 +47,16 @@
             "status": "running",
             "restartPolicy": "always",
             "env": {
-              "VIDEO_PATH": {"value": "0"},
-              "IMAGE_PROCESSING_ENDPOINT":  {"value": "http://image-classifier-service:80/image"},
-              "RESIZE_WIDTH":  {"value": "256"},
-              "RESIZE_HEIGHT":  {"value": "256"},
-              "SHOW_VIDEO":  {"value": "True"}
+              "LOCAL_PICTURE_PATH": "$LOCAL_PICTURE_PATH",
+              "NH_CONNECTION_STRING": "$NH_CONNECTION_STRING",
+              "NH_NAME": "$NH_NAME",
+              "IOT_HUB_CONNECTION_sTRING": "$IOT_HUB_CONNECTION_STRING"
             },
             "settings": {
               "image": "${MODULES.CameraCapture.arm32v7}",
               "createOptions": {
                 "HostConfig": {
+                  "Privileged": "true",
                   "PortBindings": {
                     "5012/tcp": [ { "HostPort":"5012"}]
                   },
