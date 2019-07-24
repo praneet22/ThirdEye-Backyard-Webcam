@@ -42,7 +42,7 @@
         },
         "modules": {
           "camera-capture": {
-            "version": "1.0",
+            "version": "2.0",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
@@ -50,7 +50,7 @@
               "LOCAL_PICTURE_PATH": {"value": "$LOCAL_PICTURE_PATH"},
               "NH_CONNECTION_STRING": {"value": "$NH_CONNECTION_STRING"},
               "NH_NAME": {"value": "$NH_NAME"},
-              "IOT_HUB_CONNECTION_STRING": {"value": "$IOT_HUB_CONNECTION_STRING"}
+              "IOTHUB_CONNECTION_STRING": {"value": "$IOTHUB_CONNECTION_STRING"}
             },
             "settings": {
               "image": "${MODULES.CameraCapture.arm32v7}",
@@ -67,7 +67,7 @@
             }
           },
           "image-classifier-service": {
-            "version": "1.0",
+            "version": "2.0",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
@@ -77,13 +77,20 @@
             }
           },
           "wildlife-image-classifier": {
-            "version": "1.0",
+            "version": "2.0",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
             "settings": {
               "image": "${MODULES.WildlifeModel.arm32v7}",
-              "createOptions": ""
+              "createOptions": {
+                "HostConfig": {
+                  "Privileged": "true",
+                  "PortBindings": {
+                    "80/tcp": [ { "HostPort":"80"}]
+                  }
+                }
+              }
             }
           }
         
@@ -94,7 +101,6 @@
       "properties.desired": {
         "schemaVersion": "1.0",
         "routes": {
-          "CameraCaptureToSenseHatDisplay": "FROM /messages/modules/camera-capture/outputs/output1 INTO BrokeredEndpoint(\"/modules/sensehat-display/inputs/input1\")",
           "CameraCaptureToIoTHub": "FROM /messages/modules/camera-capture/outputs/output1 INTO $upstream",
           "CameraCaptureGAToIoTHub": "FROM /messages/modules/CameraCaptureGA/outputs/* INTO $upstream"
         },

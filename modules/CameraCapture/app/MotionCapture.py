@@ -40,10 +40,6 @@ IMAGE_PROCESSING_ENDPOINT = os.getenv('IMAGE_PROCESSING_ENDPOINT', "http://wildl
 VERBOSE=  os.getenv('VERBOSE', False)
 THRESHOLD = 0.7
 
-pir.when_motion = motion_detected
-pause()
-
-
 def blob_upload_callback(result, user_context):
     print(str(result))
 
@@ -121,3 +117,7 @@ def motion_detected():
         # stop video recording
         camera.stop_preview()
         camera.stop_recording()
+
+
+pir.when_motion = motion_detected
+pause()

@@ -4,7 +4,7 @@ gpiozero
 picamera
 # numpy
 # opencv-contrib-python
-# requests
+requests
 # trollius
 # tornado==4.5.3
 # twilio
