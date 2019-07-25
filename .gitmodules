@@ -1,0 +1,3 @@
+[submodule "modules/BackyardCamAndroid"]
+	path = modules/BackyardCamAndroid
+	url = https://github.com/yzheng72/BackyardCamAndroid
