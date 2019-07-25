@@ -85,7 +85,7 @@ def extract_bilinear_pixel(img, x, y, ratio, xOrigin, yOrigin):
     b = xDelta * br + (1. - xDelta) * bl
     t = xDelta * tr + (1. - xDelta) * tl
     pixel = yDelta * t + (1. - yDelta) * b
-    return pixel.astype(np.uint8)
+    return pixel
 
 def extract_and_resize(img, targetSize):
     determinant = img.shape[1] * targetSize[0] - img.shape[0] * targetSize[1]
@@ -101,7 +101,7 @@ def extract_and_resize(img, targetSize):
         ratio = float(img.shape[0]) / float(targetSize[0])
         xOrigin = 0
         yOrigin = 0
-    resize_image = np.empty((targetSize[0], targetSize[1], img.shape[2]), dtype=np.uint8)
+    resize_image = np.empty((targetSize[0], targetSize[1], img.shape[2]), dtype=np.float32)
     for y in range(targetSize[0]):
         for x in range(targetSize[1]):
             resize_image[y, x] = extract_bilinear_pixel(img, x, y, ratio, xOrigin, yOrigin)
@@ -114,8 +114,8 @@ def extract_and_resize_to_256_square(image):
 
 def crop_center(img,cropx,cropy):
     h, w = img.shape[:2]
-    startx = max(0, w//2-(cropx//2) - 1)
-    starty = max(0, h//2-(cropy//2) - 1)
+    startx = max(0, w//2-(cropx//2))
+    starty = max(0, h//2-(cropy//2))
     log_msg("crop_center: " + str(w) + "x" + str(h) +" to " + str(cropx) + "x" + str(cropy))
     return img[starty:starty+cropy, startx:startx+cropx]
 

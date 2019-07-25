@@ -4,7 +4,7 @@
     "image": {
         "repository": "$CONTAINER_REGISTRY_ADDRESS/wildlifeclassifier$MODULE_SUFFIX",
         "tag": {
-            "version": "0.2.5",
+            "version": "0.2.6",
             "platforms": {
                 "arm32v7": "./arm32v7.Dockerfile"
             }

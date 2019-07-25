@@ -1,3 +1,5 @@
-Beer
+Bear
 Deer
+Duck
+Rabbit
 Squirrel

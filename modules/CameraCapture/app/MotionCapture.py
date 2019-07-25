@@ -5,13 +5,16 @@ from datetime import datetime
 import time
 import requests
 import json
+import logging
 
 from gpiozero import MotionSensor
 from signal import pause
 from picamera import PiCamera
 from iothub_client import IoTHubClient, IoTHubTransportProvider
-
 from NotifcationHubClient import NotificationHub
+
+logging.basicConfig(filename='example.log',level=logging.DEBUG)
+logging.debug('This message should go to the log file')
 
 DEBUG = 0
 
@@ -27,6 +30,8 @@ DELAY = 10
 
 # instatiate the Pi Camera
 camera = PiCamera()
+camera.rotation = 180
+camera.resolution = (400, 400)
 
 # setup iothub client
 iot_client = IoTHubClient(os.environ['IOTHUB_CONNECTION_STRING'], IoTHubTransportProvider.HTTP)
@@ -41,7 +46,7 @@ VERBOSE=  os.getenv('VERBOSE', False)
 THRESHOLD = 0.7
 
 def blob_upload_callback(result, user_context):
-    print(str(result))
+    logging.debug(str(result))
 
 
 def send_frame_for_processing(imagePath):
@@ -49,18 +54,19 @@ def send_frame_for_processing(imagePath):
     try:
         response = requests.post(IMAGE_PROCESSING_ENDPOINT, files=files)
     except Exception as e:
-        print('sendFrameForProcessing Excpetion -' + str(e))
+        logging.debug('sendFrameForProcessing Excpetion -' + str(e))
         return "[]"
     if VERBOSE:
         try:
-            print("Response from external processing service: (" + str(response.status_code) + ") " + json.dumps(response.json()))
+            logging.debug("Response from external processing service: (" + str(response.status_code) + ") " + json.dumps(response.json()))
         except Exception:
-            print("Response from external processing service (status code): " + str(response.status_code))
+            logging.debug("Response from external processing service (status code): " + str(response.status_code))
     return response
 
 
 def motion_detected():
     try:
+        time.sleep(1)
         # Capture a image on the camera
         filename = os.path.join(PIC_PATH, datetime.now().isoformat())
         jpg_filename = filename + '.jpg'
@@ -72,51 +78,75 @@ def motion_detected():
         camera.start_recording(mov_filename)
 
         # call image classifier
-        response = send_frame_for_processing(filename)
+        logging.debug("Processing image")
+        response = send_frame_for_processing(jpg_filename)
         predictions = response.json()["predictions"]
-        image_object = sorted(predictions, key = lambda i: i['probability'])[0]
-
+        logging.debug(predictions)
+        #image_object = sorted(predictions, key = lambda i: i['probability'])[0]
+        image_object = sorted(predictions, key=lambda x: x['probability']).pop()
+        print("Image processed")
+        print('{} detected with {} probability'.format(image_object["tagName"],round(image_object["probability"],4)))
+        logging.debug('{} detected with {} probability'.format(image_object["tagName"],round(image_object["probability"],4)))
+        
+        
         # recording duration
         time.sleep(DELAY)
         
         camera.stop_preview()
         camera.stop_recording()
+        logging.debug("stopped recording")
 
         # TODO: classify image and determine whether to keep image or not
-        keep_image = False
-        if image_object["probability"] > THRESHOLD:
+        # Once the model accuracy improves, make keep_image = False as default
+        keep_image = True
+        if float(round(image_object["probability"],4)) > THRESHOLD:
             keep_image = True
+            logging.debug("image probability {}. keep image: True".format(round(image_object["probability"],4)))
         
         # TODO adjust message based on classification result
-        message = '{} detected with {} probability'.format(image_object["tagName"],image_object["probability"])
-        
+        message = '{} detected with {} probability'.format(image_object["tagName"],round(image_object["probability"],4))
+        print(message)
+        logging.debug(message)
+
         if keep_image:
-            # print and push message
+            # logging.debug and push message
             # TODO: change message to include classifcation result
-            print(message)
+            logging.debug("Sending Notification")
+            logging.debug(message)
             nh_client.send_fcm_notification(payload=dict(data=dict(message=message)))
 
             # send picture to blob
+            logging.debug("uploading image {}".format(jpg_filename))
             with open(jpg_filename, 'rb') as f:
                 content = f.read()
-                iot_client.upload_blob_async(jpg_filename, content, len(content), blob_upload_callback, DEBUG)
+                file_name = os.path.join("images/scoring",os.path.basename(jpg_filename))
+                logging.debug("uploading image to {}".format(file_name))
+                iot_client.upload_blob_async(file_name, content, len(content), blob_upload_callback, DEBUG)
 
             # send movie recording to blob
+            logging.debug("uploading video {}".format(mov_filename))
             with open(mov_filename, 'rb') as f:
                 content = f.read()
-                iot_client.upload_blob_async(jpg_filename, content, len(content), blob_upload_callback, DEBUG)
+                file_name = os.path.join("videos/scoring",os.path.basename(mov_filename))
+                logging.debug("uploading video to {}".format(file_name))
+                iot_client.upload_blob_async(file_name, content, len(content), blob_upload_callback, DEBUG)
+            logging.debug("Deleting files")
+            os.remove(jpg_filename)
+            os.remove(mov_filename)
+
         else:
             # clear out image and recording
+            logging.debug("Deleting files")
             os.remove(jpg_filename)
             os.remove(mov_filename)
     
     except Exception as e:
-        print('Encountered exception: {}\n Carrying on...'.format(e))
+        logging.debug('Encountered exception: {}\n Carrying on...'.format(e))
 
-    finally:
-        # stop video recording
-        camera.stop_preview()
-        camera.stop_recording()
+    # finally:
+    #     # stop video recording
+    #     camera.stop_preview()
+    #     camera.stop_recording()
 
 
 pir.when_motion = motion_detected
