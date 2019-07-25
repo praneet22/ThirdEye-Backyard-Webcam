@@ -30,7 +30,8 @@ DELAY = 10
 
 # instatiate the Pi Camera
 camera = PiCamera()
-camera.resolution = (300, 300)
+camera.rotation = 180
+camera.resolution = (400, 400)
 
 # setup iothub client
 iot_client = IoTHubClient(os.environ['IOTHUB_CONNECTION_STRING'], IoTHubTransportProvider.HTTP)
@@ -65,6 +66,7 @@ def send_frame_for_processing(imagePath):
 
 def motion_detected():
     try:
+        time.sleep(1)
         # Capture a image on the camera
         filename = os.path.join(PIC_PATH, datetime.now().isoformat())
         jpg_filename = filename + '.jpg'
@@ -76,13 +78,15 @@ def motion_detected():
         camera.start_recording(mov_filename)
 
         # call image classifier
-        print("Processing image")
+        logging.debug("Processing image")
         response = send_frame_for_processing(jpg_filename)
         predictions = response.json()["predictions"]
-        image_object = sorted(predictions, key = lambda i: i['probability'])[0]
+        logging.debug(predictions)
+        #image_object = sorted(predictions, key = lambda i: i['probability'])[0]
+        image_object = sorted(predictions, key=lambda x: x['probability']).pop()
         print("Image processed")
-        print('{} detected with {} probability'.format(image_object["tagName"],image_object["probability"]))
-        logging.debug('{} detected with {} probability'.format(image_object["tagName"],image_object["probability"]))
+        print('{} detected with {} probability'.format(image_object["tagName"],round(image_object["probability"],4)))
+        logging.debug('{} detected with {} probability'.format(image_object["tagName"],round(image_object["probability"],4)))
         
         
         # recording duration
@@ -95,12 +99,12 @@ def motion_detected():
         # TODO: classify image and determine whether to keep image or not
         # Once the model accuracy improves, make keep_image = False as default
         keep_image = True
-        if float(image_object["probability"]) > THRESHOLD:
+        if float(round(image_object["probability"],4)) > THRESHOLD:
             keep_image = True
-            logging.debug("image probability {}. keep image: True".format(image_object["probability"]))
+            logging.debug("image probability {}. keep image: True".format(round(image_object["probability"],4)))
         
         # TODO adjust message based on classification result
-        message = '{} detected with {} probability'.format(image_object["tagName"],image_object["probability"])
+        message = '{} detected with {} probability'.format(image_object["tagName"],round(image_object["probability"],4))
         print(message)
         logging.debug(message)
 
@@ -115,13 +119,21 @@ def motion_detected():
             logging.debug("uploading image {}".format(jpg_filename))
             with open(jpg_filename, 'rb') as f:
                 content = f.read()
-                iot_client.upload_blob_async(jpg_filename, content, len(content), blob_upload_callback, DEBUG)
+                file_name = os.path.join("images/scoring",os.path.basename(jpg_filename))
+                logging.debug("uploading image to {}".format(file_name))
+                iot_client.upload_blob_async(file_name, content, len(content), blob_upload_callback, DEBUG)
 
             # send movie recording to blob
             logging.debug("uploading video {}".format(mov_filename))
             with open(mov_filename, 'rb') as f:
                 content = f.read()
-                iot_client.upload_blob_async(mov_filename, content, len(content), blob_upload_callback, DEBUG)
+                file_name = os.path.join("videos/scoring",os.path.basename(mov_filename))
+                logging.debug("uploading video to {}".format(file_name))
+                iot_client.upload_blob_async(file_name, content, len(content), blob_upload_callback, DEBUG)
+            logging.debug("Deleting files")
+            os.remove(jpg_filename)
+            os.remove(mov_filename)
+
         else:
             # clear out image and recording
             logging.debug("Deleting files")
