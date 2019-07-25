@@ -93,8 +93,9 @@ def motion_detected():
         logging.debug("stopped recording")
 
         # TODO: classify image and determine whether to keep image or not
-        keep_image = False
-        if image_object["probability"] > THRESHOLD:
+        # Once the model accuracy improves, make keep_image = False as default
+        keep_image = True
+        if float(image_object["probability"]) > THRESHOLD:
             keep_image = True
             logging.debug("image probability {}. keep image: True".format(image_object["probability"]))
         
